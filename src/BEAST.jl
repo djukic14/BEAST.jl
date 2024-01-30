@@ -18,6 +18,8 @@ using LiftedMaps
 using AbstractTrees
 using NestedUnitRanges
 
+using SumTypes
+
 import LinearAlgebra: cross, dot
 import LinearAlgebra: ×, ⋅
 
@@ -48,7 +50,7 @@ export timebasisshiftedlagrange
 export TimeBasisDeltaShifted
 export ntrace
 export strace
-export ttrace 
+export ttrace
 export SingleLayer
 export DoubleLayer
 export DoubleLayerTransposed
@@ -185,6 +187,7 @@ include("interpolation.jl")
 
 include("quadrature/doublenumqstrat.jl")
 include("quadrature/doublenumsauterqstrat.jl")
+include("quadrature/sumtypedoublenumwiltonsauterqstrat.jl")
 include("quadrature/doublenumwiltonsauterqstrat.jl")
 include("quadrature/doublenumwiltonbogaertqstrat.jl")
 
