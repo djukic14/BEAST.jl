@@ -72,7 +72,7 @@ include("test_td_tensoroperator.jl")
 
 include("test_variational.jl")
 
-include("test_sumtypedoublenumwiltonsauterqstrat.jl")
+include("test_quadsumtypes.jl")
 
 try
     Pkg.installed("BogaertInts10")

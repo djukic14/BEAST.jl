@@ -107,9 +107,9 @@ The `FourQuadStratsSumType` is determined by the type of `commonfacerule`, `comm
     sumtype = FourQuadStratsSumType{typeof(commonfacerule),typeof(commonedgerule),
         typeof(commonvertexrule),typeof(doublequadrule)}
 
-    hits == 3 && return convert(sumtype, FourQuadStratsSumType'.CommonFace(commonfacerule))
-    hits == 2 && return convert(sumtype, FourQuadStratsSumType'.CommonEdge(commonedgerule))
-    hits == 1 && return convert(sumtype, FourQuadStratsSumType'.CommonVertex(commonvertexrule))
+    hits == 3 && return sumtype(FourQuadStratsSumType'.CommonFace(commonfacerule))
+    hits == 2 && return sumtype(FourQuadStratsSumType'.CommonEdge(commonedgerule))
+    hits == 1 && return sumtype(FourQuadStratsSumType'.CommonVertex(commonvertexrule))
 
-    return convert(sumtype, FourQuadStratsSumType'.DoubleQuad(doublequadrule))
+    return sumtype(FourQuadStratsSumType'.DoubleQuad(doublequadrule))
 end

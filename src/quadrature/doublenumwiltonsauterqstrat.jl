@@ -98,27 +98,19 @@ This function determines the appropriate sum type quadrature rule based on the n
         typeof(wiltonrule),
         typeof(doublequadrule),
     }
-    hits == 3 && return convert(
-        sumtype,
-        FiveQuadStratsSumType'.CommonFace(commonfacerule),
-    )
 
-    hits == 2 && return convert(
-        sumtype,
-        FiveQuadStratsSumType'.CommonEdge(commonedgerule),
-    )
+    hits == 3 && return sumtype(FiveQuadStratsSumType'.CommonFace(commonfacerule))
 
-    hits == 1 && return convert(
-        sumtype,
-        FiveQuadStratsSumType'.CommonVertex(commonvertexrule),
-    )
+    hits == 2 && return sumtype(FiveQuadStratsSumType'.CommonEdge(commonedgerule))
+
+    hits == 1 && return sumtype(FiveQuadStratsSumType'.CommonVertex(commonvertexrule))
 
     h2 = volume(σ)
     xtol2 = 0.2 * 0.2
     k2 = abs2(gamma(op))
     if max(dmin2 * k2, dmin2 / 16h2) < xtol2
-        return convert(sumtype, FiveQuadStratsSumType'.WiltonSE(wiltonrule))
+        return sumtype(FiveQuadStratsSumType'.WiltonSE(wiltonrule))
     end
 
-    return convert(sumtype, FiveQuadStratsSumType'.DoubleQuad(doublequadrule))
+    return sumtype(FiveQuadStratsSumType'.DoubleQuad(doublequadrule))
 end
