@@ -32,22 +32,12 @@ Compute the quadrature rule for the given integral operator and reference spaces
 - `qs::DoubleNumWiltonSauterQStrat`: Quadrature strategy.
 
 # Returns
-The computed quadrature rule as a DoubleNumWiltonSauterQStratSumType.
+The computed quadrature rule as a `FiveQuadStratsSumType``.
 
 """
 function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd,
     qs::DoubleNumWiltonSauterQStrat)
-    T = eltype(eltype(τ.vertices))
-    hits = 0
-    dtol = 1.0e3 * eps(T)
-    dmin2 = floatmax(T)
-    for t in τ.vertices
-        for s in σ.vertices
-            d2 = LinearAlgebra.norm_sqr(t - s)
-            dmin2 = min(dmin2, d2)
-            hits += (d2 < dtol)
-        end
-    end
+    hits, dmin2 = _hitsanddmin2(τ, σ)
 
     commonfacerule = SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
     commonedgerule = SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
@@ -56,8 +46,6 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, 
         qd.tpoints[2, i], DoubleQuadRule(qd.tpoints[2, i], qd.bpoints[2, j])
     )
     doublequadrule = DoubleQuadRule(qd.tpoints[1, i], qd.bpoints[1, j])
-
-
 
     # decide which quad rule should be used and convert to appropriate sum type
     quadrule = _sumtypequadrule(
@@ -93,38 +81,43 @@ This function determines the appropriate sum type quadrature rule based on the n
 - `doublequadrule`: The double quadrature rule.
 
 ## Returns
-- `DoubleNumWiltonSauterQStratSumType`: The appropriate quadrature rule.
+- `FiveQuadStratsSumType`: The appropriate quadrature rule.
 
 """
-function _sumtypequadrule(op, hits, σ, dmin2, commonfacerule, commonedgerule,
-    commonvertexrule, wiltonrule, doublequadrule,
+function _sumtypequadrule(
+    op, hits, σ, dmin2, commonfacerule, commonedgerule, commonvertexrule, wiltonrule,
+    doublequadrule,
 )
-
     # types of all quad rules are needed for type inference of return value of this
     # function
-    sumtype = DoubleNumWiltonSauterQStratSumType{
+    sumtype = FiveQuadStratsSumType{
         typeof(commonfacerule),
         typeof(commonedgerule),
         typeof(commonvertexrule),
         typeof(wiltonrule),
         typeof(doublequadrule),
     }
-    hits == 3 &&
-        return convert(sumtype, DoubleNumWiltonSauterQStratSumType'.SauterSchwabCommonFace(commonfacerule))
+    hits == 3 && return convert(
+        sumtype,
+        FiveQuadStratsSumType'.CommonFace(commonfacerule),
+    )
 
-    hits == 2 &&
-        return convert(sumtype, DoubleNumWiltonSauterQStratSumType'.SauterSchwabCommonEdge(commonedgerule))
+    hits == 2 && return convert(
+        sumtype,
+        FiveQuadStratsSumType'.CommonEdge(commonedgerule),
+    )
 
-    hits == 1 && return convert(sumtype, DoubleNumWiltonSauterQStratSumType'.SauterSchwabCommonVertex(
-        commonvertexrule
-    ))
+    hits == 1 && return convert(
+        sumtype,
+        FiveQuadStratsSumType'.CommonVertex(commonvertexrule),
+    )
 
     h2 = volume(σ)
     xtol2 = 0.2 * 0.2
     k2 = abs2(gamma(op))
     if max(dmin2 * k2, dmin2 / 16h2) < xtol2
-        return convert(sumtype, DoubleNumWiltonSauterQStratSumType'.WiltonSE(wiltonrule))
+        return convert(sumtype, FiveQuadStratsSumType'.WiltonSE(wiltonrule))
     end
 
-    return convert(sumtype, DoubleNumWiltonSauterQStratSumType'.DoubleQuad(doublequadrule))
+    return convert(sumtype, FiveQuadStratsSumType'.DoubleQuad(doublequadrule))
 end

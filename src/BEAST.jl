@@ -187,7 +187,7 @@ include("interpolation.jl")
 
 include("quadrature/doublenumqstrat.jl")
 include("quadrature/doublenumsauterqstrat.jl")
-include("quadrature/sumtypedoublenumwiltonsauterqstrat.jl")
+include("quadrature/quadstratssumtypes.jl")
 include("quadrature/doublenumwiltonsauterqstrat.jl")
 include("quadrature/doublenumwiltonbogaertqstrat.jl")
 
