@@ -31,7 +31,7 @@ Compute the number of hits and the minimum squared distance between two elements
 - `hits::Int`: The number of hits, i.e., the number of pairs of vertices that are considered close.
 - `dmin2::Real`: The minimum squared distance between the vertices of the two elements.
 """
-function _hitsanddmin2(τ, σ, distancetol=1.0e3)
+function _hitsanddmin2(τ, σ; distancetol=1.0e3)
     T = eltype(eltype(τ.vertices))
     hits = 0
     dtol = distancetol * eps(T)
@@ -69,7 +69,7 @@ Compute the quadrature rule for the given integral operator, reference spaces, i
 function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd,
     qs::DoubleNumSauterQstrat)
 
-    hits, _ = _hitsanddmin2(τ, σ)
+    hits, _ = _hitsanddmin2(τ, σ; distancetol=1.0e3)
 
     commonfacerule = SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
     commonedgerule = SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
@@ -100,7 +100,7 @@ The `FourQuadStratsSumType` is determined by the type of `commonfacerule`, `comm
 - `FourQuadStratsSumType`: The determined `FourQuadStratsSumType` based on the number of hits.
 
 """
-function _sumtypequadrule(
+@inline function _sumtypequadrule(
     hits, commonfacerule, commonedgerule, commonvertexrule, doublequadrule,
 )
 

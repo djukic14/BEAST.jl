@@ -37,7 +37,7 @@ The computed quadrature rule as a `FiveQuadStratsSumType``.
 """
 function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd,
     qs::DoubleNumWiltonSauterQStrat)
-    hits, dmin2 = _hitsanddmin2(τ, σ)
+    hits, dmin2 = _hitsanddmin2(τ, σ; distancetol=1.0e3)
 
     commonfacerule = SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
     commonedgerule = SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
@@ -45,6 +45,7 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, 
     wiltonrule = WiltonSERule(
         qd.tpoints[2, i], DoubleQuadRule(qd.tpoints[2, i], qd.bpoints[2, j])
     )
+
     doublequadrule = DoubleQuadRule(qd.tpoints[1, i], qd.bpoints[1, j])
 
     # decide which quad rule should be used and convert to appropriate sum type
@@ -84,7 +85,7 @@ This function determines the appropriate sum type quadrature rule based on the n
 - `FiveQuadStratsSumType`: The appropriate quadrature rule.
 
 """
-function _sumtypequadrule(
+@inline function _sumtypequadrule(
     op, hits, σ, dmin2, commonfacerule, commonedgerule, commonvertexrule, wiltonrule,
     doublequadrule,
 )

@@ -201,7 +201,7 @@ function assemblechunk_body_trial_refines_test!(biop,
                 test_functions, tcell, tchart,
                 trial_functions, bcell, bchart,
                 qrule, quadstrat)
-                
+
             I = length(test_assembly_data[p])
             J = length(trial_assembly_data[q])
             for j in 1 : J, i in 1 : I
@@ -330,8 +330,8 @@ function assembleblock_body!(biop::IntegralOperator,
     @assert length(active_test_el_ids) <= length(test_elements)
     @assert length(active_trial_el_ids) <= length(bsis_elements)
 
-    @assert maximum(active_test_el_ids) <= length(test_elements) "$(maximum(active_test_el_ids)), $(length(test_elements))"
-    @assert maximum(active_trial_el_ids) <= length(bsis_elements) "$(maximum(active_trial_el_ids)), $(length(bsis_elements))"
+    @assert maximum(active_test_el_ids) <= length(test_elements)
+    @assert maximum(active_trial_el_ids) <= length(bsis_elements)
 
     for p in active_test_el_ids
         tcell = test_elements[p]
@@ -380,8 +380,8 @@ function assembleblock_body_trial_refines_test!(biop::IntegralOperator,
     @assert length(active_test_el_ids) <= length(test_elements)
     @assert length(active_trial_el_ids) <= length(bsis_elements)
 
-    @assert maximum(active_test_el_ids) <= length(test_elements) "$(maximum(active_test_el_ids)), $(length(test_elements))"
-    @assert maximum(active_trial_el_ids) <= length(bsis_elements) "$(maximum(active_trial_el_ids)), $(length(bsis_elements))"
+    @assert maximum(active_test_el_ids) <= length(test_elements)
+    @assert maximum(active_trial_el_ids) <= length(bsis_elements)
 
     for p in active_test_el_ids
         tcell = test_elements[p]
@@ -432,8 +432,8 @@ function assembleblock_body_test_refines_trial!(biop::IntegralOperator,
     @assert length(active_test_el_ids) <= length(test_elements)
     @assert length(active_trial_el_ids) <= length(bsis_elements)
 
-    @assert maximum(active_test_el_ids) <= length(test_elements) "$(maximum(active_test_el_ids)), $(length(test_elements))"
-    @assert maximum(active_trial_el_ids) <= length(bsis_elements) "$(maximum(active_trial_el_ids)), $(length(bsis_elements))"
+    @assert maximum(active_test_el_ids) <= length(test_elements)
+    @assert maximum(active_trial_el_ids) <= length(bsis_elements)
 
     for p in active_test_el_ids
         tcell = test_elements[p]
@@ -606,6 +606,3 @@ function assemblecol_body!(biop,
                 for (m,a) in test_assembly_data[p,i]
                     store(a*zlocal[i,j]*b, m, 1)
 end end end end end
-
-
-

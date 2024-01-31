@@ -39,9 +39,9 @@ const _dof_perms_bdm = [
 ]
 
 function dof_permutation(::BDMRefSpace, vert_permutation)
-    i = findfirst(==(tuple(vert_permutation...)), _vert_perms_bdm)
+    i = findfirst(==(tuple(vert_permutation[1], vert_permutation[2], vert_permutation[3])),
+    _vert_perms_bdm)
     return _dof_perms_bdm[i]
 end
 
 dimtype(::BDMRefSpace, ::CompScienceMeshes.Simplex{U,2}) where {U} = Val{6}
-

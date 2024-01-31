@@ -209,7 +209,7 @@ end
 # end
 
 function curl(ref::LagrangeRefSpace{T,2,3} where {T}, sh, el)
-    #curl of lagc0d2 as combination of bdm functions 
+    #curl of lagc0d2 as combination of bdm functions
     z=zero(typeof(sh.coeff))
     if sh.refid < 4
         sh1 = Shape(sh.cellid, mod1(2*sh.refid+1,6), +sh.coeff)
@@ -253,11 +253,13 @@ const _dof_perms_lag1 = [
 ]
 
 function dof_permutation(::LagrangeRefSpace{<:Any,0}, vert_permutation)
-    i = findfirst(==(tuple(vert_permutation...)), _vert_perms_lag)
+    i = findfirst(==(tuple(vert_permutation[1], vert_permutation[2], vert_permutation[3])),
+     _vert_perms_lag)
     return _dof_perms_lag0[i]
 end
 
 function dof_permutation(::LagrangeRefSpace{<:Any,1}, vert_permutation)
-    i = findfirst(==(tuple(vert_permutation...)), _vert_perms_lag)
+    i = findfirst(==(tuple(vert_permutation[1], vert_permutation[2], vert_permutation[3])),
+     _vert_perms_lag)
     return _dof_perms_lag1[i]
 end
