@@ -230,12 +230,34 @@ end
 #
 ################################################################################
 
+"""
+    gamma_wavenumber_handler(gamma, wavenumber)
+
+This function handles the input of `gamma` and `wavenumber`. It throws an error if both `gamma` and 
+`wavenumber` are provided. If neither is provided, it assumes a static problem and returns `Val(0)` 
+for `gamma` and `wavenumber`. The same is true for `gamma` and `wavenumber` if either is zero.
+
+# Arguments
+- `gamma`: `im` * `wavenumber` or `nothing`.
+- `wavenumber`: `wavenumber` or `nothing`.
+
+# Returns
+- `gamma` and `wavenumber`: Appropriate pair `gamma` and `wavenumber`.
+"""
 function gamma_wavenumber_handler(gamma, wavenumber)
-    if !((gamma !== nothing) ⊻ (wavenumber !== nothing))
-        error("Supply one of (not both) gamma or wavenumber")
+    if !isnothing(gamma) && !isnothing(wavenumber)
+        error("Supplying both gamma and wavenumber is not supported.")
+
+    elseif isnothing(gamma) && isnothing(wavenumber)
+        # if neither gamma nor wavenumber is supplied, we are assuming a static problem
+        return Val(0), Val(0)
+    elseif !isnothing(gamma) && iszero(gamma) 
+        return Val(0), Val(0)
+    elseif !isnothing(wavenumber) && iszero(wavenumber) 
+        return Val(0), Val(0)
     end
 
-    if gamma === nothing && (wavenumber !== nothing)
+    if isnothing(gamma) && !isnothing(wavenumber)
         if iszero(real(wavenumber))
             gamma = -imag(wavenumber)
         else
@@ -243,7 +265,24 @@ function gamma_wavenumber_handler(gamma, wavenumber)
         end
     end
 
-  return gamma, wavenumber
+    return gamma, wavenumber
+end
+
+"""
+    isstatic(gamma)
+
+This function checks if the provided `gamma` value represents a static problem. 
+It returns true if `gamma` is of type `Val{0}` or if `gamma` is zero, indicating
+a static problem.
+
+# Arguments
+- `gamma`: `gamma` value.
+
+# Returns
+- A boolean indicating whether the problem is static or not.
+"""
+function isstatic(gamma)
+    return typeof(gamma) == Val{0} || iszero(gamma)
 end
 
 function operator_parameter_handler(alpha, gamma, wavenumber)
@@ -251,11 +290,10 @@ function operator_parameter_handler(alpha, gamma, wavenumber)
   gamma, wavenumber = gamma_wavenumber_handler(gamma, wavenumber)
 
   if alpha === nothing
-      if gamma !== nothing
-          alpha = one(real(typeof(gamma)))
+      if isstatic(gamma) # static problem
+        alpha = 1.0 # default to double precision
       else
-          # We are dealing with a static problem. Default to double precision.
-          alpha = 1.0
+        alpha = one(real(typeof(gamma)))
       end
   end
 

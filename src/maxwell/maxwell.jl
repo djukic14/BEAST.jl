@@ -24,7 +24,7 @@ module Maxwell3D
         
         gamma, wavenumber = Mod.gamma_wavenumber_handler(gamma, wavenumber)
 
-        @assert gamma !== nothing
+        @assert !Mod.isstatic(gamma)
 
         alpha === nothing && (alpha = -gamma)
         beta  === nothing && (beta  = -1/gamma)
@@ -55,10 +55,10 @@ module Maxwell3D
         gamma, wavenumber = Mod.gamma_wavenumber_handler(gamma, wavenumber)
 
         if alpha === nothing
-            if gamma !== nothing
-                alpha = one(gamma)
-            else
+            if Mod.isstatic(gamma) # static case 
                 alpha = 1.0 # Default to double precision
+            else
+                alpha = one(gamma)
             end
         end
 

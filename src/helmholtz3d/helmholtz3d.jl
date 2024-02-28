@@ -47,18 +47,19 @@ module Helmholtz3D
         gamma, wavenumber = Mod.gamma_wavenumber_handler(gamma, wavenumber)
 
         if alpha === nothing
-            if gamma !== nothing
-                alpha = gamma^2
+            if isstatic(gamma) #static case
+                alpha = 0.0  # In the long run, this should probably be rather 'nothing'
             else
-                alpha = 0.0 # In the long run, this should probably be rather 'nothing'
+                alpha = gamma^2 
             end
+
         end
 
         if beta === nothing
-            if gamma !== nothing
-                beta = one(gamma)
-            else
+            if isstatic(gamma) #static case
                 beta = one(alpha)
+            else
+                beta = one(gamma)
             end
         end
 
@@ -76,7 +77,7 @@ module Helmholtz3D
         # Note: Unlike for the operators, there seems little benefit in
         # explicitly declaring a Laplace-Type excitation.
     
-        gamma === nothing && (gamma = zero(amplitude))
+        isstatic(gamma) && (gamma = zero(amplitude))
 
         return Mod.HH3DPlaneWave(direction, amplitude, gamma)
     end
@@ -97,7 +98,7 @@ module Helmholtz3D
     )
 
         gamma, wavenumber = Mod.gamma_wavenumber_handler(gamma, wavenumber)
-        gamma === nothing && (gamma = zero(amplitude))
+        isstatic(gamma) && (gamma = zero(amplitude))
 
         return Mod.HH3DMonopole(position, gamma, amplitude)
     end
@@ -110,7 +111,7 @@ module Helmholtz3D
     )
 
         gamma, wavenumber = Mod.gamma_wavenumber_handler(gamma, wavenumber)
-        gamma === nothing && (gamma = zero(amplitude))
+        isstatic(gamma) && (gamma = zero(amplitude))
 
         return Mod.gradHH3DMonopole(position, gamma, amplitude)
     end
