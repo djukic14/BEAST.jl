@@ -27,41 +27,81 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
-    i, τ::CompScienceMeshes.Simplex{<:Any, 2},
-    j, σ::CompScienceMeshes.Simplex{<:Any, 2},
-    qd, qs::DoubleNumSauterQstrat)
+# function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
+#     i, τ::CompScienceMeshes.Simplex{<:Any, 2},
+#     j, σ::CompScienceMeshes.Simplex{<:Any, 2},
+#     qd, qs::DoubleNumSauterQstrat)
+
+#     hits = _numhits(τ, σ)
+#     @assert hits <= 3
+
+#     hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
+#     hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
+#     hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+
+#     return DoubleQuadRule(
+#         qd.tpoints[1,i],
+#         qd.bpoints[1,j],)
+# end
+
+# function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
+#     i, τ::CompScienceMeshes.Quadrilateral,
+#     j, σ::CompScienceMeshes.Quadrilateral,
+#     qd, qs::DoubleNumSauterQstrat)
+
+#     hits = _numhits(τ, σ)
+#     @assert hits != 3
+#     @assert hits <= 4
+
+#     hits == 4 && return SauterSchwabQuadrature.CommonFaceQuad(qd.gausslegendre[3])
+#     hits == 2 && return SauterSchwabQuadrature.CommonEdgeQuad(qd.gausslegendre[2])
+#     hits == 1 && return SauterSchwabQuadrature.CommonVertexQuad(qd.gausslegendre[1])
+
+#     return DoubleQuadRule(
+#         qd.tpoints[1,i],
+#         qd.bpoints[1,j],)
+# end
+
+function momintegrals!(op::IntegralOperator, g, f, i, τ::CompScienceMeshes.Simplex{<:Any, 2},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 2}, qd, ::DoubleNumSauterQstrat, test_space, 
+    trial_space, zlocal)
 
     hits = _numhits(τ, σ)
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+    hits == 3 && return  momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3]))
+    hits == 2 && return  momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2]))
+    hits == 1 && return  momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
+    return  momintegrals!(
+        op, g, f, τ, σ, zlocal, DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
-    i, τ::CompScienceMeshes.Quadrilateral,
-    j, σ::CompScienceMeshes.Quadrilateral,
-    qd, qs::DoubleNumSauterQstrat)
+function momintegrals!(op::IntegralOperator, g, f, i, τ::CompScienceMeshes.Quadrilateral,
+    j, σ::CompScienceMeshes.Quadrilateral, qd, ::DoubleNumSauterQstrat, test_space, 
+    trial_space, zlocal)
 
     hits = _numhits(τ, σ)
     @assert hits != 3
     @assert hits <= 4
 
-    hits == 4 && return SauterSchwabQuadrature.CommonFaceQuad(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdgeQuad(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertexQuad(qd.gausslegendre[1])
+    hits == 4 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonFaceQuad(qd.gausslegendre[3]))
+    hits == 2 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonEdgeQuad(qd.gausslegendre[2]))
+    hits == 1 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonVertexQuad(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
+    return momintegrals!(
+        op, g, f, τ, σ, zlocal,DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end
-
 
 function _numhits(τ, σ)
     T = coordtype(τ)

@@ -18,8 +18,47 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g, f,  i, τ, j, σ, qd,
-    qs::DoubleNumWiltonSauterQStrat)
+# function quadrule(op::IntegralOperator, g, f,  i, τ, j, σ, qd,
+#     qs::DoubleNumWiltonSauterQStrat)
+
+#     T = eltype(eltype(τ.vertices))
+#     hits = 0
+#     dtol = 1.0e3 * eps(T)
+#     dmin2 = floatmax(T)
+#     for t in τ.vertices
+#         for s in σ.vertices
+#             d2 = LinearAlgebra.norm_sqr(t-s)
+#             d = norm(t-s)
+#             dmin2 = min(dmin2, d2)
+#             # hits += (d2 < dtol)
+#             hits += (d < dtol)
+#         end
+#     end
+
+#     @assert hits <= 3
+
+#     hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
+#     hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
+#     hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+
+#     h2 = volume(σ)
+#     xtol2 = 0.2 * 0.2
+#     k2 = abs2(gamma(op))
+#     if max(dmin2*k2, dmin2/16h2) < xtol2
+#         return WiltonSERule(
+#             qd.tpoints[2,i],
+#             DoubleQuadRule(
+#                 qd.tpoints[2,i],
+#                 qd.bpoints[2,j],),)
+#     end
+
+#     return DoubleQuadRule(
+#         qd.tpoints[1,i],
+#         qd.bpoints[1,j],)
+# end
+
+function momintegrals!(op::IntegralOperator, g, f, i, τ, j, σ, qd,
+    ::DoubleNumWiltonSauterQStrat, test_space, trial_space, zlocal)
 
     T = eltype(eltype(τ.vertices))
     hits = 0
@@ -37,22 +76,29 @@ function quadrule(op::IntegralOperator, g, f,  i, τ, j, σ, qd,
 
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+    hits == 3 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
+    ) 
+    hits == 2 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
+    )
+    hits == 1 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+    )
 
     h2 = volume(σ)
     xtol2 = 0.2 * 0.2
     k2 = abs2(gamma(op))
     if max(dmin2*k2, dmin2/16h2) < xtol2
-        return WiltonSERule(
+        return momintegrals!(
+            op, g, f, τ, σ, zlocal,
+            WiltonSERule(
             qd.tpoints[2,i],
             DoubleQuadRule(
                 qd.tpoints[2,i],
-                qd.bpoints[2,j],),)
+                qd.bpoints[2,j],),))
     end
 
-    return DoubleQuadRule(
-        qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+    return momintegrals!(
+        op, g, f, τ, σ, zlocal, DoubleQuadRule(qd.tpoints[1,i],qd.bpoints[1,j]))
 end

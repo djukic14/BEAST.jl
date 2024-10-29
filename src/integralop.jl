@@ -143,10 +143,12 @@ function assemblechunk_body!(biop,
         for (q,(bcell,bptr)) in enumerate(zip(trial_elements, trial_cell_ptrs))
 
         fill!(zlocal, 0)
-        qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, qd, quadstrat)
-        momintegrals!(zlocal, biop,
-            test_space,  tptr, tcell,
-            trial_space, bptr, bcell, qrule)
+        # qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, qd, quadstrat)
+        # momintegrals!(zlocal, biop,
+        #     test_space,  tptr, tcell,
+        #     trial_space, bptr, bcell, qrule)
+        momintegrals!(biop, test_shapes, trial_shapes, p, tcell, q, bcell, 
+        qd, quadstrat, test_space, trial_space, zlocal)
         I = length(test_assembly_data[p])
         J = length(trial_assembly_data[q])
         for j in 1 : J, i in 1 : I
@@ -387,10 +389,12 @@ function assembleblock_body!(biop::IntegralOperator,
             bcell = bsis_elements[q]
 
             fill!(zlocals[Threads.threadid()], 0)
-            qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
-            momintegrals!(zlocals[Threads.threadid()], biop,
-                tfs, p, tcell,
-                bfs, q, bcell, qrule)
+            # qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
+            # momintegrals!(zlocals[Threads.threadid()], biop,
+            #     tfs, p, tcell,
+            #     bfs, q, bcell, qrule)
+            momintegrals!(biop, test_shapes, trial_shapes, p, tcell, q, bcell, 
+            quadrature_data, quadstrat, tfs, bfs, zlocals[Threads.threadid()])
 
             for j in 1 : size(zlocals[Threads.threadid()],2)
                 for i in 1 : size(zlocals[Threads.threadid()],1)
@@ -604,11 +608,13 @@ function assemblerow_body!(biop,
         for (q,bcell) in enumerate(trial_elements)
 
             fill!(zlocal, 0)
-            qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
-            momintegrals!(zlocal, biop,
-                test_functions, nothing, tcell,
-                trial_functions, nothing, bcell,
-                qrule)
+            # qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
+            # momintegrals!(zlocal, biop,
+            #     test_functions, nothing, tcell,
+            #     trial_functions, nothing, bcell,
+            #     qrule)
+            momintegrals!(biop, test_shapes, trial_shapes, p, tcell, q, bcell, 
+            quadrature_data, quadstrat, test_functions, trial_functions, zlocal)
 
             for j in 1:size(zlocal,2)
                 for (n,b) in trial_assembly_data[q,j]
@@ -658,10 +664,12 @@ function assemblecol_body!(biop,
         for (p,tcell) in enumerate(test_elements)
 
             fill!(zlocal, 0)
-            qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
-            momintegrals!(zlocal, biop,
-                test_functions, nothing, tcell,
-                trial_functions, nothing, bcell, qrule)
+            # qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
+            # momintegrals!(zlocal, biop,
+            #     test_functions, nothing, tcell,
+            #     trial_functions, nothing, bcell, qrule)
+            momintegrals!(biop, test_shapes, trial_shapes, p, tcell, q, bcell, 
+            quadrature_data, quadstrat, test_functions, trial_functions, zlocal)
 
             for i in 1:size(zlocal,1)
                 for (m,a) in test_assembly_data[p,i]

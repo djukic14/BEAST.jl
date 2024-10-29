@@ -277,7 +277,7 @@ end
     o = ones(numfunctions(X0))
 
     # Interior Dirichlet problem - compare Sauter & Schwab eqs. 3.81
-    M_IDPDL = (-1 / 2 * assemble(Identity(), X0, Y1) + assemble(D, X0, Y1)) # Double layer (DL)
+    M_IDPDL = (-1 / 2 * assemble(Identity(), X0, Y1) + assemble(D, X0, Y1)) # Double layer (DL) ## error:  assemble(D, X0, Y1)
 
     # Interior Neumann problem
     # Neumann derivative from SL potential with deflected nullspace

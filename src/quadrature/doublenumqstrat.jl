@@ -12,16 +12,29 @@ function quaddata(operator::IntegralOperator,
 end
 
 
-function quadrule(operator::IntegralOperator,
-    local_test_basis, local_trial_basis,
-    test_id, test_element, trial_id, trial_element,
-    quad_data, qs::DoubleNumQStrat)
+# function quadrule(operator::IntegralOperator,
+#     local_test_basis, local_trial_basis,
+#     test_id, test_element, trial_id, trial_element,
+#     quad_data, qs::DoubleNumQStrat)
 
-    test_quad_rules  = quad_data[1]
+#     test_quad_rules  = quad_data[1]
+#     trial_quad_rules = quad_data[2]
+
+#     DoubleQuadRule(
+#         test_quad_rules[1,test_id],
+#         trial_quad_rules[1,trial_id]
+#     )
+# end
+
+function momintegrals!(op::IntegralOperator, local_test_basis, local_trial_basis, test_id,
+    test_element, trial_id, trial_element, quad_data, ::DoubleNumQStrat, test_space, 
+    trial_space, zlocal)
+
+    test_quad_rules = quad_data[1]
     trial_quad_rules = quad_data[2]
 
-    DoubleQuadRule(
-        test_quad_rules[1,test_id],
-        trial_quad_rules[1,trial_id]
-    )
+    return momintegrals!(
+        op, local_test_basis, local_trial_basis, test_element, trial_element, zlocal, DoubleQuadRule(
+            test_quad_rules[1,test_id],
+            trial_quad_rules[1,trial_id],))
 end

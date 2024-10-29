@@ -17,8 +17,47 @@ function quaddata(op::IntegralOperator,
     return (tpoints=tqd, bpoints=bqd)
 end
 
-function quadrule(op::IntegralOperator, g::RTRefSpace, f::RTRefSpace, i, τ, j, σ, qd,
-    qs::DoubleNumWiltonBogaertQStrat)
+# function quadrule(op::IntegralOperator, g::RTRefSpace, f::RTRefSpace, i, τ, j, σ, qd,
+#     qs::DoubleNumWiltonBogaertQStrat)
+
+#     dtol = 1.0e3 * eps(eltype(eltype(τ.vertices)))
+#     xtol = 0.2
+  
+#     k = norm(gamma(op))
+  
+#     hits = 0
+#     xmin = xtol
+#     for t in τ.vertices
+#       for s in σ.vertices
+#         d = norm(t-s)
+#         xmin = min(xmin, k*d)
+#         if d < dtol
+#           hits +=1
+#           break
+#         end
+#       end
+#     end
+  
+#     hits == 3   && return BogaertSelfPatchStrategy(5)
+#     hits == 2   && return BogaertEdgePatchStrategy(8, 4)
+#     hits == 1   && return BogaertPointPatchStrategy(2, 3)
+#     rmin = xmin/k
+#     xmin < xtol && return WiltonSERule(
+#       qd.tpoints[1,i],
+#       DoubleQuadRule(
+#         qd.tpoints[2,i],
+#         qd.bpoints[2,j],
+#       ),
+#     )
+#     return DoubleQuadRule(
+#       qd.tpoints[1,i],
+#       qd.bpoints[1,j],
+#     )
+  
+# end
+
+function momintegrals!(op::IntegralOperator, g, f, i, τ, j, σ, qd,
+    ::DoubleNumWiltonBogaertQStrat, test_space, trial_space, zlocal)
 
     dtol = 1.0e3 * eps(eltype(eltype(τ.vertices)))
     xtol = 0.2
@@ -38,20 +77,21 @@ function quadrule(op::IntegralOperator, g::RTRefSpace, f::RTRefSpace, i, τ, j, 
       end
     end
   
-    hits == 3   && return BogaertSelfPatchStrategy(5)
-    hits == 2   && return BogaertEdgePatchStrategy(8, 4)
-    hits == 1   && return BogaertPointPatchStrategy(2, 3)
+    hits == 3   && return momintegrals!(op, g, f, τ, σ, zlocal, BogaertSelfPatchStrategy(5))
+    hits == 2   && return momintegrals!(op, g, f, τ, σ, zlocal, BogaertEdgePatchStrategy(8, 4))
+    hits == 1   && return momintegrals!(op, g, f, τ, σ, zlocal, BogaertPointPatchStrategy(2, 3))s
     rmin = xmin/k
-    xmin < xtol && return WiltonSERule(
+    xmin < xtol && return momintegrals!(op, g, f, τ, σ, zlocal, WiltonSERule(
       qd.tpoints[1,i],
       DoubleQuadRule(
         qd.tpoints[2,i],
         qd.bpoints[2,j],
       ),
-    )
-    return DoubleQuadRule(
+    )) 
+
+    return momintegrals!(op, g, f, τ, σ, zlocal, DoubleQuadRule(
       qd.tpoints[1,i],
       qd.bpoints[1,j],
-    )
-  
-  end
+    ))
+
+end

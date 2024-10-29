@@ -18,15 +18,24 @@ function quaddata(operator::NitscheHH3,
   return (tpoints=tqd, bpoints=bqd)
 end
 
-function quadrule(op::NitscheHH3, g::LagrangeRefSpace, f::LagrangeRefSpace, i, τ, j, σ, qd,
-        qs::DoubleNumWiltonSauterQStrat)
+# function quadrule(op::NitscheHH3, g::LagrangeRefSpace, f::LagrangeRefSpace, i, τ, j, σ, qd,
+#         qs::DoubleNumWiltonSauterQStrat)
         
-    DoubleQuadRule(
-        qd.tpoints[1,i],
-        qd.bpoints[1,j]
-    )
-end
+#     DoubleQuadRule(
+#         qd.tpoints[1,i],
+#         qd.bpoints[1,j]
+#     )
+# end
 
+function momintegrals!(op::NitscheHH3, g::LagrangeRefSpace, f::LagrangeRefSpace, i, τ, j, σ, qd,
+    ::DoubleNumWiltonSauterQStrat, test_space, trial_space, zlocal)
+
+    return momintegrals!(
+        op, g, f, τ, σ, zlocal, DoubleQuadRule(
+            qd.tpoints[1,i],
+            qd.bpoints[1,j]
+        ))
+end
 
 struct KernelValsMaxwell3D{T,U,P,Q}
     "gamma = im * wavenumber"

@@ -27,15 +27,18 @@ function momintegrals!(out, op,
         [test_chart], trial_charts, quadstrat)
 
     for (q,chart) in enumerate(trial_charts)
-        qr = quadrule(op, test_local_space, trial_local_space,
-            1, test_chart, q ,chart, qd, quadstrat)
+        # qr = quadrule(op, test_local_space, trial_local_space,
+        #     1, test_chart, q ,chart, qd, quadstrat)
             
         Q = restrict(trial_local_space, trial_chart, chart)
         zlocal = zero(out)
 
-        momintegrals!(zlocal, op,
-            test_functions, nothing, test_chart,
-            trial_functions, nothing, chart, qr)
+        # momintegrals!(zlocal, op,
+        #     test_functions, nothing, test_chart,
+        #     trial_functions, nothing, chart, qr)
+
+        momintegrals!(op, test_local_space, trial_local_space, 1, test_chart, q, chart, 
+        qd, quadstrat, test_functions, trial_functions, zlocal)
 
         for j in 1:num_bshapes
             for i in 1:num_tshapes

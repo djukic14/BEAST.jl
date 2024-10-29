@@ -21,8 +21,34 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,  i, τ, j, σ, qd,
-    qs::SelfSauterOtherwiseDNumQStrat)
+# function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,  i, τ, j, σ, qd,
+#     qs::SelfSauterOtherwiseDNumQStrat)
+
+#     T = eltype(eltype(τ.vertices))
+#     hits = 0
+#     dtol = 1.0e3 * eps(T)
+#     dmin2 = floatmax(T)
+#     for t in τ.vertices
+#         for s in σ.vertices
+#             d2 = LinearAlgebra.norm_sqr(t-s)
+#             d = norm(t-s)
+#             dmin2 = min(dmin2, d2)
+#             # hits += (d2 < dtol)
+#             hits += (d < dtol)
+#         end
+#     end
+
+#     @assert hits <= 3
+
+#     hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[1])
+
+#     return DoubleQuadRule(
+#         qd.tpoints[1,i],
+#         qd.bpoints[1,j],)
+# end
+
+function momintegrals!(op::IntegralOperator, g, f, i, τ, j, σ, qd,
+    ::SelfSauterOtherwiseDNumQStrat, test_space, trial_space, zlocal)
 
     T = eltype(eltype(τ.vertices))
     hits = 0
@@ -40,9 +66,13 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,  i, τ, j, σ,
 
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[1])
+    hits == 3 && return momintegrals!(
+        op, g, f, τ, σ, zlocal, SauterSchwabQuadrature.CommonFace(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
-        qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+    return momintegrals!(
+        op, g, f, τ, σ, zlocal,
+        DoubleQuadRule(
+            qd.tpoints[1,i],
+            qd.bpoints[1,j],)
+        )
 end

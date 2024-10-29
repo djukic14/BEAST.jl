@@ -302,8 +302,12 @@ function quaddata(op::VIEOperator,
     return (tpoints=t_qp, bpoints=b_qp, sing_qp=sing_qp)
 end
 
-quadrule(op::VolumeOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs) = qr_volume(op, g, f, i, τ, j, σ, qd, qs)
+# quadrule(op::VolumeOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs) = qr_volume(op, g, f, i, τ, j, σ, qd, qs)
 
+function momintegrals!(op::VolumeOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs, 
+    test_space, trial_space, zlocal)
+    return momintegrals!(op, g, f, τ, σ, zlocal, qr_volume(op, g, f, i, τ, j, σ, qd, qs))
+end
 
 function qr_volume(op::VolumeOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd,
     qs::SauterSchwab3DQStrat)
@@ -348,7 +352,12 @@ function qr_volume(op::VolumeOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, q
 
 end
 
-quadrule(op::BoundaryOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs) = qr_boundary(op, g, f, i, τ, j, σ, qd, qs)
+# quadrule(op::BoundaryOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs) = qr_boundary(op, g, f, i, τ, j, σ, qd, qs)
+
+function momintegrals!(op::BoundaryOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs, 
+    test_space, trial_space, zlocal)
+    return momintegrals!(op, g, f, τ, σ, zlocal, qr_boundary(op, g, f, i, τ, j, σ, qd, qs))
+end
 
 function qr_boundary(op::BoundaryOperator, g::RefSpace, f::RefSpace, i, τ, j,  σ, qd,
     qs::SauterSchwab3DQStrat)
