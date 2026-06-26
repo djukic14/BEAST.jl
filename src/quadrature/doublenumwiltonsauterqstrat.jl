@@ -29,7 +29,17 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g, f,  i, τ, j, σ, qd,
+function quadrule(op::IntegralOperator, g, h,
+    i, τ::CompScienceMeshes.Simplex{<:Any,2},
+    j, σ::CompScienceMeshes.Simplex{<:Any,2}, qd,
+    qs::DoubleNumWiltonSauterQStrat)
+
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g, h,
+    i, τ::CompScienceMeshes.Simplex{<:Any,2},
+    j, σ::CompScienceMeshes.Simplex{<:Any,2}, qd,
     qs::DoubleNumWiltonSauterQStrat)
 
     T = eltype(eltype(τ.vertices))
@@ -48,22 +58,22 @@ function quadrule(op::IntegralOperator, g, f,  i, τ, j, σ, qd,
 
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+    hits == 3 && return f(SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3]))
+    hits == 2 && return f(SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2]))
+    hits == 1 && return f(SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1]))
 
     h2 = volume(σ)
     xtol2 = 0.2 * 0.2
     k2 = abs2(gamma(op))
     if max(dmin2*k2, dmin2/16h2) < xtol2
-        return WiltonSERule(
+        return f(WiltonSERule(
             qd.tpoints[2,i],
             DoubleQuadRule(
                 qd.tpoints[2,i],
-                qd.bpoints[2,j],),)
+                qd.bpoints[2,j],),))
     end
 
-    return DoubleQuadRule(
+    return f(DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end

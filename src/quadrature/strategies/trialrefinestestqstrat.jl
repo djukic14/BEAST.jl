@@ -9,10 +9,16 @@ end
 function quadrule(a, 𝒳, 𝒴, i, τ, j, σ, qd,
     qs::TrialRefinesTestQStrat)
 
+    return quadrule(ReturnQuadrule(), a, 𝒳, 𝒴, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, a, 𝒳, 𝒴, i, τ, j, σ, qd,
+    qs::TrialRefinesTestQStrat)
+
     hits = _numhits(τ, σ)
     if hits > 0
-        return TrialRefinesTestQRule(qs.conforming_qstrat)
+        return f(TrialRefinesTestQRule(qs.conforming_qstrat))
     end
 
-    return quadrule(a, 𝒳, 𝒴, i, τ, j, σ, qd, qs.conforming_qstrat)    
+    return quadrule(f, a, 𝒳, 𝒴, i, τ, j, σ, qd, qs.conforming_qstrat)
 end

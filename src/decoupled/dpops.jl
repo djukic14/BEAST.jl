@@ -20,9 +20,11 @@ end
 function momintegrals!(out, op::CurlSingleLayerDP3D,
     test_local_space::RTRefSpace, tptr, test_triangular_element,
     trial_local_space::LagrangeRefSpace, bptr, trial_triangular_element,
-    qrule::SauterSchwabStrategy)
+    qrule::SauterSchwabStrategy, qbuffer)
 
-    I, J, K, L = SauterSchwabQuadrature.reorder(
+    sbuffer = sauterschwab_buffer(qbuffer, qrule)
+    I, J, K, L = sbuffer.I, sbuffer.J, sbuffer.K, sbuffer.L
+    sauterschwab_reorder!(I, J, K, L,
         test_triangular_element.vertices,
         trial_triangular_element.vertices, qrule)
 

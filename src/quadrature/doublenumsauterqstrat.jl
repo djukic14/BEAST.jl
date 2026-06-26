@@ -15,7 +15,7 @@ function quaddata(op::IntegralOperator,
 
     tqd = quadpoints(test_local_space,  test_charts,  (qs.outer_rule,))
     bqd = quadpoints(trial_local_space, trial_charts, (qs.inner_rule,))
-     
+
     leg = (
       convert.(NTuple{2,T},_legendre(qs.sauter_schwab_common_vert,0,1)),
       convert.(NTuple{2,T},_legendre(qs.sauter_schwab_common_edge,0,1)),
@@ -36,7 +36,7 @@ function quaddata(op::IntegralOperator,
     t_qp = quadpoints(test_local_space,  test_charts,  (qs.outer_rule,))
     b_qp = quadpoints(trial_local_space, trial_charts, (qs.inner_rule,))
 
-    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1), 
+    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1),
                SauterSchwab3D._shunnham2D(qs.sauter_schwab_common_edge),
                SauterSchwab3D._shunnham3D(qs.sauter_schwab_common_face),
                SauterSchwab3D._shunnham4D(qs.sauter_schwab_common_tetr),)
@@ -53,7 +53,7 @@ function quaddata(op::IntegralOperator,
     t_qp = quadpoints(test_local_space,  test_charts,  (qs.outer_rule,))
     b_qp = quadpoints(trial_local_space, trial_charts, (qs.inner_rule,))
 
-    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1), 
+    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1),
                SauterSchwab3D._shunnham2D(qs.sauter_schwab_common_edge),
                SauterSchwab3D._shunnham3D(qs.sauter_schwab_common_face),
                SauterSchwab3D._shunnham4D(qs.sauter_schwab_common_tetr),)
@@ -71,7 +71,7 @@ function quaddata(op::IntegralOperator,
     t_qp = quadpoints(test_local_space,  test_charts,  (qs.outer_rule,))
     b_qp = quadpoints(trial_local_space, trial_charts, (qs.inner_rule,))
 
-    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1), 
+    sing_qp = (SauterSchwab3D._legendre(qs.sauter_schwab_common_vert,0,1),
                SauterSchwab3D._shunnham2D(qs.sauter_schwab_common_edge),
                SauterSchwab3D._shunnham3D(qs.sauter_schwab_common_face),
                SauterSchwab3D._shunnham4D(qs.sauter_schwab_common_tetr),)
@@ -79,7 +79,15 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 2},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 2},
+    qd, qs::DoubleNumSauterQstrat)
+
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace,
     i, τ::CompScienceMeshes.Simplex{<:Any, 2},
     j, σ::CompScienceMeshes.Simplex{<:Any, 2},
     qd, qs::DoubleNumSauterQstrat)
@@ -87,40 +95,77 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
     hits = _numhits(τ, σ)
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1])
+    hits == 3 && return f(SauterSchwabQuadrature.CommonFace(qd.gausslegendre[3]))
+    hits == 2 && return f(SauterSchwabQuadrature.CommonEdge(qd.gausslegendre[2]))
+    hits == 1 && return f(SauterSchwabQuadrature.CommonVertex(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
+    return f(DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end
 
 struct _TransposedStrat{A}
     strat::A
-end 
-
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, 
-    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
-    j, σ::CompScienceMeshes.Simplex{<:Any, 3}, 
-    qd, qs::DoubleNumSauterQstrat) 
-    qr_volume(op, g, f, i, τ, j, σ, qd, qs)
-end
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, 
-    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
-    j, σ::CompScienceMeshes.Simplex{<:Any, 2}, 
-    qd, qs::DoubleNumSauterQstrat) 
-    qr_boundary(op, g, f, i, τ, j, σ, qd, qs)
 end
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace, 
+struct _TransposedQuadruleCallback{F <: QuadruleCallback} <: QuadruleCallback
+    f::F
+end
+
+function (f::_TransposedQuadruleCallback)(qrule)
+    return f.f(_TransposedStrat(qrule))
+end
+
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 3},
+    qd, qs::DoubleNumSauterQstrat)
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 2},
+    qd, qs::DoubleNumSauterQstrat)
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace,
     i, τ::CompScienceMeshes.Simplex{<:Any, 2},
-    j, σ::CompScienceMeshes.Simplex{<:Any, 3}, 
-    qd, qs::DoubleNumSauterQstrat) 
-    _TransposedStrat(qr_boundary(op, g, f, i, τ, j, σ, qd, qs))
+    j, σ::CompScienceMeshes.Simplex{<:Any, 3},
+    qd, qs::DoubleNumSauterQstrat)
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
 end
 
-function qr_volume(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ, qd, qs)
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 3},
+    qd, qs::DoubleNumSauterQstrat)
+
+    return qr_volume(f, op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 3},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 2},
+    qd, qs::DoubleNumSauterQstrat)
+
+    return qr_boundary(f, op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Simplex{<:Any, 2},
+    j, σ::CompScienceMeshes.Simplex{<:Any, 3},
+    qd, qs::DoubleNumSauterQstrat)
+
+    return qr_boundary(_TransposedQuadruleCallback(f), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function qr_volume(op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j, σ, qd, qs)
+
+    return qr_volume(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function qr_volume(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j, σ, qd, qs)
 
     dtol = 1.0e3 * eps(eltype(eltype(τ.vertices)))
 
@@ -149,21 +194,26 @@ function qr_volume(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j, σ,
     #singData = SauterSchwab3D.Singularity{D,hits}(idx_t, idx_s )
    @assert hits <= 4
 
-    hits == 4 && return SauterSchwab3D.CommonVolume6D_S(SauterSchwab3D.Singularity6DVolume(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[4]))
-    hits == 3 && return SauterSchwab3D.CommonFace6D_S(SauterSchwab3D.Singularity6DFace(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3]))
-    hits == 2 && return SauterSchwab3D.CommonEdge6D_S(SauterSchwab3D.Singularity6DEdge(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3],qd.sing_qp[4]))
-    hits == 1 && return SauterSchwab3D.CommonVertex6D_S(SauterSchwab3D.Singularity6DPoint(idx_t,idx_s),qd.sing_qp[3])
+    hits == 4 && return f(SauterSchwab3D.CommonVolume6D_S(SauterSchwab3D.Singularity6DVolume(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[4])))
+    hits == 3 && return f(SauterSchwab3D.CommonFace6D_S(SauterSchwab3D.Singularity6DFace(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3])))
+    hits == 2 && return f(SauterSchwab3D.CommonEdge6D_S(SauterSchwab3D.Singularity6DEdge(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3],qd.sing_qp[4])))
+    hits == 1 && return f(SauterSchwab3D.CommonVertex6D_S(SauterSchwab3D.Singularity6DPoint(idx_t,idx_s),qd.sing_qp[3]))
 
 
 
-    return DoubleQuadRule(
+    return f(DoubleQuadRule(
         qd[1][1,i],
-        qd[2][1,j])
+        qd[2][1,j]))
 
 end
 
 
-function qr_boundary(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j,  σ, qd, qs)
+function qr_boundary(op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j, σ, qd, qs)
+
+    return qr_boundary(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function qr_boundary(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j,  σ, qd, qs)
 
     dtol = 1.0e3 * eps(eltype(eltype(τ.vertices)))
 
@@ -191,20 +241,28 @@ function qr_boundary(op::IntegralOperator, g::RefSpace, f::RefSpace, i, τ, j,  
 
     @assert hits <= 3
     #singData = SauterSchwab3D.Singularity{D,hits}(idx_t, idx_s )
-   
-
-    hits == 3 && return SauterSchwab3D.CommonFace5D_S(SauterSchwab3D.Singularity5DFace(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3]))
-    hits == 2 && return SauterSchwab3D.CommonEdge5D_S(SauterSchwab3D.Singularity5DEdge(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3]))
-    hits == 1 && return SauterSchwab3D.CommonVertex5D_S(SauterSchwab3D.Singularity5DPoint(idx_t,idx_s),(qd.sing_qp[3],qd.sing_qp[2]))
 
 
-    return DoubleQuadRule(
+    hits == 3 && return f(SauterSchwab3D.CommonFace5D_S(SauterSchwab3D.Singularity5DFace(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3])))
+    hits == 2 && return f(SauterSchwab3D.CommonEdge5D_S(SauterSchwab3D.Singularity5DEdge(idx_t,idx_s),(qd.sing_qp[1],qd.sing_qp[2],qd.sing_qp[3])))
+    hits == 1 && return f(SauterSchwab3D.CommonVertex5D_S(SauterSchwab3D.Singularity5DPoint(idx_t,idx_s),(qd.sing_qp[3],qd.sing_qp[2])))
+
+
+    return f(DoubleQuadRule(
         qd[1][1,i],
-        qd[2][1,j])
+        qd[2][1,j]))
 
 end
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace,
+    i, τ::CompScienceMeshes.Quadrilateral,
+    j, σ::CompScienceMeshes.Quadrilateral,
+    qd, qs::DoubleNumSauterQstrat)
+
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace,
     i, τ::CompScienceMeshes.Quadrilateral,
     j, σ::CompScienceMeshes.Quadrilateral,
     qd, qs::DoubleNumSauterQstrat)
@@ -213,13 +271,13 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,
     @assert hits != 3
     @assert hits <= 4
 
-    hits == 4 && return SauterSchwabQuadrature.CommonFaceQuad(qd.gausslegendre[3])
-    hits == 2 && return SauterSchwabQuadrature.CommonEdgeQuad(qd.gausslegendre[2])
-    hits == 1 && return SauterSchwabQuadrature.CommonVertexQuad(qd.gausslegendre[1])
+    hits == 4 && return f(SauterSchwabQuadrature.CommonFaceQuad(qd.gausslegendre[3]))
+    hits == 2 && return f(SauterSchwabQuadrature.CommonEdgeQuad(qd.gausslegendre[2]))
+    hits == 1 && return f(SauterSchwabQuadrature.CommonVertexQuad(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
+    return f(DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end
 
 

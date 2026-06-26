@@ -70,6 +70,7 @@ function assemblechunk!(op::QuasiLocalOperator, tfs::Space, bfs::Space, store321
 
     qd = quaddata(op, trefs, brefs, tels, bels, quadstrat)
     zlocal = zeros(T, num_trefs, num_brefs)
+    qbuffer = quadraturebuffer(quadstrat)
     tree = elementstree(bels, 1.1)
 
     δ = oprange(op)
@@ -93,10 +94,12 @@ function assemblechunk!(op::QuasiLocalOperator, tfs::Space, bfs::Space, store321
                 @assert q <= size(bad.data, 3)
 
                 fill!(zlocal, 0)
-                qrule = quadrule(op, trefs, brefs, p, tcell, q, bcell, qd, quadstrat)
-                momintegrals!(zlocal, op,
+                apply = ApplyMomintegrals(zlocal, op,
                     tfs, tptr, tcell,
-                    bfs, bptr, bcell, qrule)
+                    bfs, bptr, bcell,
+                    qbuffer)
+                quadrule(apply, op, trefs, brefs,
+                    p, tcell, q, bcell, qd, quadstrat)
 
                 for j in 1 : length(bad[q])
                     for i in 1 : length(tad[p])

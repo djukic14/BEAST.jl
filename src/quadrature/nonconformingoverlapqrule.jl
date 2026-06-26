@@ -1,6 +1,8 @@
 struct NonConformingOverlapQRule{S}
     conforming_qstrat::S
 end
+
+quadraturebuffer(qrule::NonConformingOverlapQRule) = quadraturebuffer(qrule.conforming_qstrat)
 # function tangent_rank(p::CompScienceMeshes.Simplex{U,D}) where {U,D}
 #     G = [dot(p.tangents[i], p.tangents[j]) for i in 1:D, j in 1:D]
 #     return rank(G) == D 
@@ -9,7 +11,7 @@ end
 function momintegrals!(op,
     test_local_space, basis_local_space,
     test_chart::CompScienceMeshes.Simplex, basis_chart::CompScienceMeshes.Simplex,
-    out, qrule::NonConformingOverlapQRule)
+    out, qrule::NonConformingOverlapQRule, qbuffer)
 
     num_tshapes = numfunctions(test_local_space, domain(test_chart))
     num_bshapes = numfunctions(basis_local_space, domain(basis_chart))
@@ -61,12 +63,12 @@ function momintegrals!(op,
         for (q,bchart) in enumerate(bsis_charts)
             restrict!(Q, basis_local_space, basis_chart, bchart, trial_overlaps[q])
 
-            qrule = quadrule(op, test_local_space, basis_local_space,
-                p, tchart, q, bchart, qdata, qstrat)
-
             fill!(zlocal, 0)
-            momintegrals!(op, test_local_space, basis_local_space,
-                tchart, bchart, zlocal, qrule)
+            apply = ApplyLocalMomintegrals(op,
+                test_local_space, basis_local_space,
+                tchart, bchart, zlocal, qbuffer)
+            quadrule(apply, op, test_local_space, basis_local_space,
+                p, tchart, q, bchart, qdata, qstrat)
 
             for i in axes(P,1)
                 for j in axes(Q,1)

@@ -2,10 +2,12 @@ struct TrialRefinesTestQRule{S}
     conforming_qstrat::S
 end
 
+quadraturebuffer(qrule::TrialRefinesTestQRule) = quadraturebuffer(qrule.conforming_qstrat)
+
 function momintegrals!(out, op,
     test_functions::Space, test_cell, test_chart,
     trial_functions::Space, trial_cell, trial_chart,
-    qr::TrialRefinesTestQRule)
+    qr::TrialRefinesTestQRule, qbuffer)
 
     test_local_space = refspace(test_functions)
     trial_local_space = refspace(trial_functions)
@@ -27,14 +29,14 @@ function momintegrals!(out, op,
         test_charts, [trial_chart], quadstrat)
 
     for (p,chart) in enumerate(test_charts)
-        qr = quadrule(op, test_local_space, trial_local_space,
-            p, chart, 1, trial_chart, qd, quadstrat)
-
         Q = restrict(test_local_space, test_chart, chart)
         zlocal = zero(out)
-        momintegrals!(zlocal, op,
+        apply = ApplyMomintegrals(zlocal, op,
             test_functions, nothing, chart,
-            trial_functions, trial_cell, trial_chart, qr)
+            trial_functions, trial_cell, trial_chart,
+            qbuffer)
+        quadrule(apply, op, test_local_space, trial_local_space,
+            p, chart, 1, trial_chart, qd, quadstrat)
 
         for j in 1:num_bshapes
             for i in 1:num_tshapes

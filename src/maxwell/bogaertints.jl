@@ -1,7 +1,7 @@
 function momintegrals!(z, op::MWSingleLayer3D,
     g::RTRefSpace, tptr, t,
     f::RTRefSpace, bptr, s,
-    strat::BogaertStrategy)
+    strat::BogaertStrategy, qbuffer)
 
     T, GG  = GetIntegrals(t, s, op.gamma, strat)
 
@@ -58,7 +58,7 @@ end
 function momintegrals!(z, op::MWDoubleLayer3D,
     g::RTRefSpace, tptr, τ,
     f::RTRefSpace, bptr, σ,
-    strat::BogaertStrategy)
+    strat::BogaertStrategy, qbuffer)
 
     # Get the primitives
     r = τ.vertices

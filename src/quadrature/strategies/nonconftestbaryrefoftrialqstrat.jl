@@ -9,11 +9,7 @@ end
 function BEAST.quadrule(a, 𝒳, 𝒴, i, τ, j, σ, qd,
     quadstrat::NonConfTestBaryRefOfTrialQStrat)
 
-    # return TestInBaryRefOfTrialQRule(quadstrat.conforming_qstrat)
-    nh = BEAST._numhits(τ, σ)
-    nh > 0 && return TestInBaryRefOfTrialQRule(quadstrat.conforming_qstrat)
-    return BEAST.quadrule(a, 𝒳, 𝒴, i, τ, j, σ, qd,
-        quadstrat.conforming_qstrat)
+    return BEAST.quadrule(BEAST.ReturnQuadrule(), a, 𝒳, 𝒴, i, τ, j, σ, qd, quadstrat)
 end
 
 @testitem "NonConfTestBaryRefOfTrialQStrat" begin
@@ -45,4 +41,14 @@ end
     @test norm(Kyx2 - Kyx3) < 0.002
     @test norm(Kyx2 - Kyx4) < 0.002
     @test norm(Kyx3 - Kyx4) < 1e-12
+end
+
+function BEAST.quadrule(f::BEAST.QuadruleCallback, a, 𝒳, 𝒴, i, τ, j, σ, qd,
+    quadstrat::NonConfTestBaryRefOfTrialQStrat)
+
+    # return f(TestInBaryRefOfTrialQRule(quadstrat.conforming_qstrat))
+    nh = BEAST._numhits(τ, σ)
+    nh > 0 && return f(TestInBaryRefOfTrialQRule(quadstrat.conforming_qstrat))
+    return BEAST.quadrule(f, a, 𝒳, 𝒴, i, τ, j, σ, qd,
+        quadstrat.conforming_qstrat)
 end

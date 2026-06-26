@@ -22,8 +22,14 @@ function reorder(test_chart::CompScienceMeshes.Simplex{<:Any,2,<:Any,3}, trial_c
     return I, J
 end
 
-function reorder(test_chart::CompScienceMeshes.Simplex, trial_chart::CompScienceMeshes.Simplex, 
-    strat::SauterSchwab3DStrategy)
+function reorder(test_chart::CompScienceMeshes.Simplex{<:Any,2,<:Any,3}, trial_chart::CompScienceMeshes.Simplex{<:Any,3,<:Any,4},
+    strat::SauterSchwab3DStrategy, qbuffer)
+    J, I = SauterSchwab3D.reorder(strat.sing) # 5D integral: ∫∫_Γ ∫∫∫_Ω
+    return I, J
+end
+
+function reorder(test_chart::CompScienceMeshes.Simplex, trial_chart::CompScienceMeshes.Simplex,
+    strat::SauterSchwab3DStrategy, qbuffer)
     I, J = SauterSchwab3D.reorder(strat.sing) # 6D integral: ∫∫∫_Ω ∫∫∫_Ω, 5D integral: ∫∫∫_Ω ∫∫_Γ
     return I, J
 end
@@ -35,7 +41,7 @@ end
 function momintegrals!(out, op::VIEOperator,
     test_functions::Space, test_ptr, test_chart,
     trial_functions::Space, trial_ptr, trial_chart,
-    strat::SauterSchwab3DStrategy)
+    strat::SauterSchwab3DStrategy, qbuffer)
 
     test_local_space = refspace(test_functions)
     trial_local_space = refspace(trial_functions)
@@ -43,7 +49,7 @@ function momintegrals!(out, op::VIEOperator,
     num_tshapes = numfunctions(test_local_space, domain(test_chart))
     num_bshapes = numfunctions(trial_local_space, domain(trial_chart))
 
-    I, J = reorder(test_chart, trial_chart, strat)
+    I, J = reorder(test_chart, trial_chart, strat, qbuffer)
         
     igd = Integrand(op, test_local_space, trial_local_space, test_chart, trial_chart)
     igdp = pulledback_integrand(igd, I, test_chart, J, trial_chart)

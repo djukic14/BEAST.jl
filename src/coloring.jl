@@ -41,7 +41,7 @@ function GraphsColoring.conflicts(
     end
 
     for i in eachindex(conflictindices)
-        conflictindices[i] = unique(conflictindices[i])
+        unique!(conflictindices[i])
     end
 
     return eachindex(elements),

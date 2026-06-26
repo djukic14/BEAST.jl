@@ -49,6 +49,17 @@ struct SingleNumQStrat{R} <: AbstractQuadStrat
     quad_rule::R
 end
 
+abstract type QuadruleCallback end
+
+struct ReturnQuadrule <: QuadruleCallback end
+
+(::ReturnQuadrule)(qrule) = qrule
+
+function quadrule(f::QuadruleCallback, args...)
+    return f(quadrule(args...))
+end
+
+
 function quadinfo(op, tfs, bfs; quadstrat=defaultquadstrat(op, tfs, bfs))
 
     tels, tad = assemblydata(tfs)

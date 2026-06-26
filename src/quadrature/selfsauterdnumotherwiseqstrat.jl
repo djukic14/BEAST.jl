@@ -12,7 +12,7 @@ function quaddata(op::IntegralOperator,
 
     tqd = quadpoints(test_local_space,  test_charts,  (qs.outer_rule,))
     bqd = quadpoints(trial_local_space, trial_charts, (qs.inner_rule,))
-     
+
     leg = (
       convert.(NTuple{2,T},_legendre(qs.sauter_schwab_common,0,1)),
       )
@@ -21,7 +21,13 @@ function quaddata(op::IntegralOperator,
 end
 
 
-function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,  i, τ, j, σ, qd,
+function quadrule(op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j, σ, qd,
+    qs::SelfSauterOtherwiseDNumQStrat)
+
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RefSpace, h::RefSpace, i, τ, j, σ, qd,
     qs::SelfSauterOtherwiseDNumQStrat)
 
     T = eltype(eltype(τ.vertices))
@@ -40,9 +46,9 @@ function quadrule(op::IntegralOperator, g::RefSpace, f::RefSpace,  i, τ, j, σ,
 
     @assert hits <= 3
 
-    hits == 3 && return SauterSchwabQuadrature.CommonFace(qd.gausslegendre[1])
+    hits == 3 && return f(SauterSchwabQuadrature.CommonFace(qd.gausslegendre[1]))
 
-    return DoubleQuadRule(
+    return f(DoubleQuadRule(
         qd.tpoints[1,i],
-        qd.bpoints[1,j],)
+        qd.bpoints[1,j],))
 end

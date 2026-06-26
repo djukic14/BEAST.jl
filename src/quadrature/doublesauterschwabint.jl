@@ -77,8 +77,18 @@ function _MRWrules(n,a,b)
     return collect(zip(x,w))
 end
 
-function sauterschwab_parameterized1D(integrand, strategy::SauterSchwabStrategy1D)
-    return sum(w1 * w2 * strategy(integrand, η, ξ) for (η, w1) in strategy.qpsi, (ξ, w2) in strategy.qpso)
+function sauterschwab_parameterized1D(integrand, strategy::S) where {S <: SauterSchwabStrategy1D}
+    η, w1 = strategy.qpsi[1]
+    ξ, w2 = strategy.qpso[1]
+    acc = zero(w1 * w2 * strategy(integrand, η, ξ))
+
+    for (η, w1) in strategy.qpsi
+        for (ξ, w2) in strategy.qpso
+            acc += w1 * w2 * strategy(integrand, η, ξ)
+        end
+    end
+
+    return acc
 end
 
 # In the reference domain [0, 1] x [0,1], we assume
@@ -88,7 +98,7 @@ end
 # ==> Therefore, the vertices must be mapped that the segments
 # with vertices [vt1, vt2] and [vs1, vs2] meet at vertices
 # vt2 and vs2 (since the barycentric coordinate ξ = 0 is at vt2/vs2)
-function reorder(t, s, strat::CommonVertex)
+function reorder!(I, J, K, L, t, s, strat::CommonVertex)
 
     T = eltype(t[1])
     tol = 1e3 * eps(T)
@@ -98,8 +108,6 @@ function reorder(t, s, strat::CommonVertex)
     # Find the permutation P of t and s that make
     # Pt = [P, A1, A2]
     # Ps = [P, B1, B2]
-    I = zeros(Int, 1)
-    J = zeros(Int, 1)
     e = 1
     for i in 1:2
         v = t[i]
@@ -115,10 +123,23 @@ function reorder(t, s, strat::CommonVertex)
         e == 2 && break
     end
 
-    prepend!(I, setdiff([1, 2], I))
-    prepend!(J, setdiff([1, 2], J))
+    i2 = I[1]
+    j2 = J[1]
+    for i in 1:2
+        if i != i2
+            I[1] = i
+            break
+        end
+    end
+    for j in 1:2
+        if j != j2
+            J[1] = j
+            break
+        end
+    end
+    I[2] = i2
+    J[2] = j2
 
-    K = zeros(Int, 2)
     for i in 1:2
         for j in 1:2
             if I[j] == i
@@ -128,7 +149,6 @@ function reorder(t, s, strat::CommonVertex)
         end
     end
 
-    L = zeros(Int, 2)
     for i in 1:2
         for j in 1:2
             if J[j] == i
@@ -141,25 +161,33 @@ function reorder(t, s, strat::CommonVertex)
     return I, J, K, L
 end
 
-function reorder(t, s, strat::CommonEdge)
+function reorder(t, s, strat::Union{CommonVertex,CommonEdge})
+    I = Vector{Int}(undef, 2)
+    J = Vector{Int}(undef, 2)
+    K = Vector{Int}(undef, 2)
+    L = Vector{Int}(undef, 2)
+    return reorder!(I, J, K, L, t, s, strat)
+end
+
+function reorder!(I, J, K, L, t, s, strat::CommonEdge)
 
     T = eltype(t[1])
     tol = 1e3 * eps(T)
     # tol = 1e5 * eps(T)
     # tol = sqrt(eps(T))
 
-    I = [1, 2]
-    J = zeros(Int, 2)
+    I[1] = 1
+    I[2] = 2
     v = t[1]
     w = s[1]
     if norm(w - v) < tol
-        J[:] = I[:]
+        J[1] = I[1]
+        J[2] = I[2]
     else # If first vertices do not coincide -> swap
         J[1] = 2
         J[2] = 1
     end
 
-    K = zeros(Int, 2)
     for i in 1:2
         for j in 1:2
             if I[j] == i
@@ -169,7 +197,6 @@ function reorder(t, s, strat::CommonEdge)
         end
     end
 
-    L = zeros(Int, 2)
     for i in 1:2
         for j in 1:2
             if J[j] == i

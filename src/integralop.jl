@@ -97,7 +97,7 @@ function assemblechunk!(biop::IntegralOperator, tfs::Space, bfs::Space, store;
     else
         quadstrat
     end
-    
+
     qd = quaddata(biop, tshapes, bshapes, test_elements, bsis_elements, qs)
     zlocal = zeros(scalartype(biop, tfs, bfs), 2num_tshapes, 2num_bshapes)
     # @show "after" qs
@@ -142,7 +142,6 @@ end
     @test BlockArrays.blocksizes(M) == [(n1,n1) (n1,n2); (n2,n1) (n2,n2)]
 end
 
-
 function assemblechunk_body!(biop, test_space, trial_space,
     test_elements, test_element_ptrs, test_assembly_data, active_test_els,
     trial_elements, trial_element_ptrs, trial_assembly_data, active_trial_els,
@@ -156,6 +155,7 @@ function assemblechunk_body!(biop, test_space, trial_space,
         @local begin
             zlocal = zeros(scalartype(biop, test_space, trial_space), num_tshapes, num_bshapes)
             tadjq = Vector{eltype(trial_assembly_data.data)}(undef, size(trial_assembly_data.data,1))
+            qbuffer = quadraturebuffer(quadstrat)
         end
         P = active_test_els[p]
         tcell = test_elements[P]
@@ -166,10 +166,11 @@ function assemblechunk_body!(biop, test_space, trial_space,
             bptr = trial_element_ptrs[Q]
 
             fill!(zlocal, 0)
-            qrule = quadrule(biop, refspace(test_space), refspace(trial_space),
+            apply = ApplyMomintegrals(zlocal, biop,
+                test_space, tptr, tcell, trial_space, bptr, bcell,
+                qbuffer)
+            quadrule(apply, biop, refspace(test_space), refspace(trial_space),
                 P, tcell, Q, bcell, qd, quadstrat)
-            momintegrals!(zlocal, biop,
-                test_space,  tptr, tcell, trial_space, bptr, bcell, qrule)
             for j in 1 : num_bshapes
                 tadjq .= @view trial_assembly_data.data[:,j,q]
                 for i in 1 : num_tshapes
@@ -182,6 +183,7 @@ function assemblechunk_body!(biop, test_space, trial_space,
                             (m < 1 || iszero(a)) && continue
                             store(a*zb, m, n)
 end end end end end end end
+
 
 
 # function assemblechunk_body_colored!(biop,
@@ -202,7 +204,7 @@ end end end end end end end
 #         @set scheduler = scheduler
 #         @local zlocal = zeros(scalartype(biop, test_space, trial_space), num_tshapes, num_bshapes)
 #         tcell, tptr = test_elements[p], test_cell_ptrs[p]
-    
+
 #         for q in trialelementids
 #             bcell, bptr = trial_elements[q], trial_cell_ptrs[q]
 #             fill!(zlocal, 0)
@@ -432,7 +434,7 @@ end
 #                             m′ = get(test_id_in_blk, m, 0)
 #                             m′ == 0 && continue
 #                             store(a*zlocal[i,j]*b, m′, n′)
-#     end end end end end end 
+#     end end end end end end
 #     # put!(zlocals, zlocal)
 # end
 
@@ -629,6 +631,7 @@ function assemblerow_body!(biop,
     zlocal, quadrature_data, store; quadstrat)
 
     test_function = test_functions.fns[1]
+    qbuffer = quadraturebuffer(quadstrat)
     for shape in test_function
         p = shape.cellid
         i = shape.refid
@@ -637,11 +640,12 @@ function assemblerow_body!(biop,
         for (q,bcell) in enumerate(trial_elements)
 
             fill!(zlocal, 0)
-            qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
-            momintegrals!(zlocal, biop,
+            apply = ApplyMomintegrals(zlocal, biop,
                 test_functions, nothing, tcell,
                 trial_functions, nothing, bcell,
-                qrule)
+                qbuffer)
+            quadrule(apply, biop, test_shapes, trial_shapes,
+                p, tcell, q, bcell, quadrature_data, quadstrat)
 
             for j in 1:size(zlocal,2)
                 for (n,b) in trial_assembly_data[q,j]
@@ -682,6 +686,7 @@ function assemblecol_body!(biop,
     zlocal, quadrature_data, store; quadstrat)
 
     trial_function = trial_functions.fns[1]
+    qbuffer = quadraturebuffer(quadstrat)
     for shape in trial_function
         q = shape.cellid
         j = shape.refid
@@ -691,15 +696,14 @@ function assemblecol_body!(biop,
         for (p,tcell) in enumerate(test_elements)
 
             fill!(zlocal, 0)
-            qrule = quadrule(biop, test_shapes, trial_shapes, p, tcell, q, bcell, quadrature_data, quadstrat)
-            momintegrals!(zlocal, biop,
+            apply = ApplyMomintegrals(zlocal, biop,
                 test_functions, nothing, tcell,
-                trial_functions, nothing, bcell, qrule)
+                trial_functions, nothing, bcell,
+                qbuffer)
+            quadrule(apply, biop, test_shapes, trial_shapes,
+                p, tcell, q, bcell, quadrature_data, quadstrat)
 
             for i in 1:size(zlocal,1)
                 for (m,a) in test_assembly_data[p,i]
                     store(a*zlocal[i,j]*b, m, 1)
 end end end end end
-
-
-

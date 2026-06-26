@@ -345,7 +345,8 @@ bqd = BE.quadpoints(x, [s], (13,))
 DQ_strategy = BE.DoubleQuadRule(tqd[1,1], bqd[1,1])
 BEAST.momintegrals!(z1, op,
     X, nothing, t,
-    X, nothing, s, DQ_strategy)
+    X, nothing, s, DQ_strategy,
+    BEAST.quadraturebuffer(DQ_strategy))
 
 SE_strategy = BE.WiltonSERule(
   tqd[1,1],
@@ -356,6 +357,7 @@ SE_strategy = BE.WiltonSERule(
 )
 BEAST.momintegrals!(z2, op,
     X, nothing, t,
-    X, nothing, s, SE_strategy)
+    X, nothing, s, SE_strategy,
+    BEAST.quadraturebuffer(SE_strategy))
 
 @test norm(z1-z2) < 1.0e-7

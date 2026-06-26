@@ -230,6 +230,8 @@ include("quadrature/strategies/testrefinestrialqstrat.jl")
 include("quadrature/strategies/trialrefinestestqstrat.jl")
 include("quadrature/strategies/nonconftestbaryrefoftrialqstrat.jl")
 include("quadrature/strategies/timedomain/nothingqstrat.jl")
+include("quadrature/quadraturebuffer.jl")
+include("quadrature/quadrulecallbacks.jl")
 
 
 include("excitation.jl")

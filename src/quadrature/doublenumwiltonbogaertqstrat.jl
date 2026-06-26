@@ -17,14 +17,20 @@ function quaddata(op::IntegralOperator,
     return (tpoints=tqd, bpoints=bqd)
 end
 
-function quadrule(op::IntegralOperator, g::RTRefSpace, f::RTRefSpace, i, τ, j, σ, qd,
+function quadrule(op::IntegralOperator, g::RTRefSpace, h::RTRefSpace, i, τ, j, σ, qd,
+    qs::DoubleNumWiltonBogaertQStrat)
+
+    return quadrule(ReturnQuadrule(), op, g, h, i, τ, j, σ, qd, qs)
+end
+
+function quadrule(f::QuadruleCallback, op::IntegralOperator, g::RTRefSpace, h::RTRefSpace, i, τ, j, σ, qd,
     qs::DoubleNumWiltonBogaertQStrat)
 
     dtol = 1.0e3 * eps(eltype(eltype(τ.vertices)))
     xtol = 0.2
-  
+
     k = norm(gamma(op))
-  
+
     hits = 0
     xmin = xtol
     for t in τ.vertices
@@ -37,21 +43,21 @@ function quadrule(op::IntegralOperator, g::RTRefSpace, f::RTRefSpace, i, τ, j, 
         end
       end
     end
-  
-    hits == 3   && return BogaertSelfPatchStrategy(5)
-    hits == 2   && return BogaertEdgePatchStrategy(8, 4)
-    hits == 1   && return BogaertPointPatchStrategy(2, 3)
+
+    hits == 3   && return f(BogaertSelfPatchStrategy(5))
+    hits == 2   && return f(BogaertEdgePatchStrategy(8, 4))
+    hits == 1   && return f(BogaertPointPatchStrategy(2, 3))
     rmin = xmin/k
-    xmin < xtol && return WiltonSERule(
+    xmin < xtol && return f(WiltonSERule(
       qd.tpoints[1,i],
       DoubleQuadRule(
         qd.tpoints[2,i],
         qd.bpoints[2,j],
       ),
-    )
-    return DoubleQuadRule(
+    ))
+    return f(DoubleQuadRule(
       qd.tpoints[1,i],
       qd.bpoints[1,j],
-    )
-  
+    ))
+
   end

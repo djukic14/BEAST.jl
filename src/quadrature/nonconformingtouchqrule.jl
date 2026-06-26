@@ -4,10 +4,12 @@ struct NonConformingTouchQRule{S}
     bsis_overlapping_edge_index::Int
 end
 
+quadraturebuffer(qrule::NonConformingTouchQRule) = quadraturebuffer(qrule.conforming_qstrat)
+
 function momintegrals!(op,
     test_locspace, bsis_locspace,
     τ::CompScienceMeshes.Simplex, σ::CompScienceMeshes.Simplex,
-    out, qrule::NonConformingTouchQRule)
+    out, qrule::NonConformingTouchQRule, qbuffer)
 
     num_tshapes = numfunctions(test_locspace, domain(τ))
     num_bshapes = numfunctions(bsis_locspace, domain(σ))
@@ -56,12 +58,12 @@ function momintegrals!(op,
         for (q,bchart) in enumerate(σs)
             restrict!(Q, bsis_locspace, σ, bchart, trial_overlaps[q])
             
-            qrule = quadrule(op, test_locspace, bsis_locspace,
-                p, tchart, q, bchart, qdata, qstrat)
-
             fill!(zlocal, 0)
-            momintegrals!(op, test_locspace, bsis_locspace,
-                tchart, bchart, zlocal, qrule)
+            apply = ApplyLocalMomintegrals(op,
+                test_locspace, bsis_locspace,
+                tchart, bchart, zlocal, qbuffer)
+            quadrule(apply, op, test_locspace, bsis_locspace,
+                p, tchart, q, bchart, qdata, qstrat)
 
             for i in axes(P,1)
                 for j in axes(Q,1)

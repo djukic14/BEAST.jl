@@ -8,10 +8,10 @@ end
 
 
 function (igd::Integrand)(u,v)
-    
+
     x = neighborhood(igd.test_chart,u)
     y = neighborhood(igd.trial_chart,v)
-    
+
     f = igd.local_test_space(x)
     g = igd.local_trial_space(y)
 
@@ -27,10 +27,10 @@ function (igd::Integrand{<:IntegralOperator,<:DivRefSpace,<:DivRefSpace})(u,v)
 
     x = CompScienceMeshes.neighborhood_lazy(igd.test_chart,u)
     y = CompScienceMeshes.neighborhood_lazy(igd.trial_chart,v)
-    
+
     p = neighborhood(test_domain, u)
     q = neighborhood(bsis_domain, v)
-    
+
     f̂ = igd.local_test_space(p)
     ĝ = igd.local_trial_space(q)
 
@@ -131,7 +131,11 @@ function pulledback_integrand(igd,
     ichart2 = CompScienceMeshes.permute_vertices(dom2, J)
 
     PulledBackIntegrand(igd, ichart1, ichart2)
-end 
+end
+
+function quadraturebuffer(::SauterSchwabQuadrature1D.SauterSchwabStrategy1D)
+    return _sauterschwab_buffer(2)
+end
 
 function sauterschwab_parameterized(igdp, rule::SauterSchwabStrategy)
     return SauterSchwabQuadrature.sauterschwab_parameterized(igdp, rule)
@@ -141,28 +145,32 @@ function sauterschwab_parameterized(igdp, rule::SauterSchwabQuadrature1D.SauterS
     return SauterSchwabQuadrature1D.sauterschwab_parameterized1D(igdp, rule)
 end
 
-function sauterschwab_reorder(test_vertices, trial_vertices, rule::SauterSchwabStrategy)
-    I, J, _, _ = SauterSchwabQuadrature.reorder(test_vertices, trial_vertices, rule)
+function sauterschwab_reorder!(I, J, K, L, test_vertices, trial_vertices, rule::SauterSchwabStrategy)
+    I, J, _, _ = SauterSchwabQuadrature.reorder!(I, J, K, L, test_vertices, trial_vertices, rule)
 
     return I, J
 end
 
-function sauterschwab_reorder(test_vertices, trial_vertices, rule::SauterSchwabQuadrature1D.SauterSchwabStrategy1D)
-    I, J, _, _ = SauterSchwabQuadrature1D.reorder(test_vertices, trial_vertices, rule)
+function sauterschwab_reorder!(I, J, K, L, test_vertices, trial_vertices, rule::SauterSchwabQuadrature1D.SauterSchwabStrategy1D)
+    I, J, _, _ = SauterSchwabQuadrature1D.reorder!(I, J, K, L, test_vertices, trial_vertices, rule)
 
     return I, J
 end
+
+
+sauterschwab_buffer(qbuffer, rule) = qbuffer
+sauterschwab_buffer(qbuffer, rule::SauterSchwabQuadrature1D.SauterSchwabStrategy1D) = hasproperty(qbuffer, :edge) ? qbuffer.edge : qbuffer
+sauterschwab_buffer(qbuffer, rule::Union{SauterSchwabQuadrature.CommonVertex,SauterSchwabQuadrature.CommonEdge,SauterSchwabQuadrature.CommonFace}) = hasproperty(qbuffer, :triangle) ? qbuffer.triangle : qbuffer
+sauterschwab_buffer(qbuffer, rule::Union{SauterSchwabQuadrature.CommonVertexQuad,SauterSchwabQuadrature.CommonEdgeQuad,SauterSchwabQuadrature.CommonFaceQuad}) = hasproperty(qbuffer, :quadrilateral) ? qbuffer.quadrilateral : qbuffer
 
 function momintegrals!(op::Operator,
     test_local_space, trial_local_space,
     test_chart, trial_chart,
-    out, rule::Union{SauterSchwabStrategy,SauterSchwabQuadrature1D.SauterSchwabStrategy1D})
+    out, rule::Union{SauterSchwabStrategy,SauterSchwabQuadrature1D.SauterSchwabStrategy1D}, qbuffer)
 
-    I, J = sauterschwab_reorder(
-        vertices(test_chart),
-        vertices(trial_chart),
-        rule
-    )
+    sbuffer = sauterschwab_buffer(qbuffer, rule)
+    I, J, K, L = sbuffer.I, sbuffer.J, sbuffer.K, sbuffer.L
+    sauterschwab_reorder!(I, J, K, L, vertices(test_chart), vertices(trial_chart), rule)
 
     num_tshapes = numfunctions(test_local_space, domain(test_chart))
     num_bshapes = numfunctions(trial_local_space, domain(trial_chart))
@@ -184,7 +192,7 @@ end
 function momintegrals!(op::Operator,
     test_local_space, trial_local_space,
     test_chart, trial_chart,
-    out, rule::SauterSchwab3DStrategy)
+    out, rule::SauterSchwab3DStrategy, qbuffer)
 
     I, J = SauterSchwab3D.reorder(rule.sing)
 
@@ -236,7 +244,7 @@ reversestrat(a::T) where {T <: SauterSchwab3D.SauterSchwab3DStrategy} = T(revers
 function momintegrals!(op::Operator,
     test_local_space, trial_local_space,
     test_chart, trial_chart,
-    out, rule::_TransposedStrat{<:SauterSchwab3DStrategy})
+    out, rule::_TransposedStrat{<:SauterSchwab3DStrategy}, qbuffer)
     rule2 = reversestrat(rule.strat)
     J, I = SauterSchwab3D.reorder(rule2.sing)
     #I2,J2 = SauterSchwab3D.reorder(rule.strat.sing)

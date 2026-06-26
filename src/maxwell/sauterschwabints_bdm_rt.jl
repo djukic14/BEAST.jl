@@ -60,9 +60,11 @@ end
 
 function momintegrals!(op::MWDoubleLayer3D,
     test_local_space::BDMRefSpace, trial_local_space::RTRefSpace,
-    test_triangular_element, trial_triangular_element, out, strat::SauterSchwabStrategy)
+    test_triangular_element, trial_triangular_element, out, strat::SauterSchwabStrategy, qbuffer)
 
-    I, J, K, L = SauterSchwabQuadrature.reorder(
+    sbuffer = sauterschwab_buffer(qbuffer, strat)
+    I, J, K, L = sbuffer.I, sbuffer.J, sbuffer.K, sbuffer.L
+    sauterschwab_reorder!(I, J, K, L,
         test_triangular_element.vertices,
         trial_triangular_element.vertices, strat)
 

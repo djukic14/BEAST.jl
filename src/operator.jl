@@ -246,12 +246,13 @@ function assemble!(operator::Operator, testfunctions::Space, trialfunctions::Spa
 
     testelements, testad, trialelements, trialad, qdata, _ = assembleblock_primer(
         operator, testfunctions, trialfunctions; quadstrat=quadstrat)
-    
+
     # testad = (testelements, testad, 1:length(testelements))
-    # trialad = (trialelements, trialad, 1:length(trialelements)) 
+    # trialad = (trialelements, trialad, 1:length(trialelements))
 
     testelementcolors = color(testfunctions, scheduler; addata=(testelements, testad, 1:length(testelements)))
     trialelementcolors = [1:length(trialelements)]
+    # trialelementcolors = color(trialfunctions, scheduler; addata=(trialelements, trialad, 1:length(trialelements)))
 
     qs = if CompScienceMeshes.refines(geometry(testfunctions), geometry(trialfunctions))
         TestRefinesTrialQStrat(quadstrat)
@@ -265,7 +266,7 @@ function assemble!(operator::Operator, testfunctions::Space, trialfunctions::Spa
 
     for (i, coloredtestelements) in enumerate(testelementcolors)
         testad1 = AssemblyData(testad.data[:,:,coloredtestelements])
-        for (j, coloredtrialelements) in enumerate(trialelementcolors)            
+        for (j, coloredtrialelements) in enumerate(trialelementcolors)
             # assemblechunk_body_colored!(operator,
             #     testfunctions, testad, coloredtestelements,
             #     trialfunctions, trialad, coloredtrialelements,
@@ -276,7 +277,7 @@ function assemble!(operator::Operator, testfunctions::Space, trialfunctions::Spa
                 trialelements, eachindex(trialelements), trialad, coloredtrialelements,
                 qdata, nothing, store; quadstrat=qs, scheduler)
             next!(pbar; step = length(testelementcolors[i]) * length(trialelementcolors[j]))
-    end end 
+    end end
     finish!(pbar)
 end
 
@@ -347,7 +348,7 @@ function assemble!(op::AbstractOperator, tfs::DirectProductSpace, bfs::DirectPro
     store, threading=Threading{:multi};
     quadstrat=defaultquadstrat(op, tfs[1], bfs[1]),
     kwargs...)
-    
+
     I = Int[0]
     for s in tfs.factors push!(I, last(I) + numfunctions(s)) end
     for (i,s) in enumerate(tfs.factors)
@@ -377,7 +378,7 @@ function assemble!(op::BlockDiagonalOperator, U::DirectProductSpace, V::DirectPr
     store, threading=Threading{:multi};
     quadstrat = defaultquadstrat(op, U, V),
     kwargs...)
-    
+
     @assert length(U.factors) == length(V.factors)
     I = Int[0]; for u in U.factors push!(I, last(I) + numfunctions(u)) end
     J = Int[0]; for v in V.factors push!(J, last(J) + numfunctions(v)) end
@@ -404,7 +405,7 @@ function assemble!(op::BlockFullOperators, U::DirectProductSpace, V::DirectProdu
     store, threading;
     quadstrat = defaultquadstrat(op, U, V),
     kwargs...)
-    
+
     I = Int[0]; for u in U.factors push!(I, last(I) + numfunctions(u)) end
     J = Int[0]; for v in V.factors push!(J, last(J) + numfunctions(v)) end
 
